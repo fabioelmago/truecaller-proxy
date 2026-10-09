@@ -1,5 +1,5 @@
 import os
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 
 import requests
 
@@ -90,7 +90,7 @@ def status():
 
 @app.route("/", methods=["GET"])
 def home():
-    return jsonify({"ok": True, "service": "truecaller-proxy"})
+    return render_template("index.html")
 
 
 if __name__ == "__main__":
