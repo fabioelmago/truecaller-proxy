@@ -61,9 +61,15 @@ def lookup():
     entries = data.get("data", {})
     entry_key = next((k for k in entries if k != "time"), None)
     entry = entries.get(entry_key) if entry_key else None
-    name = entry.get("name") if entry else None
 
-    if not name or name == "Not Found":
+    name = None
+    if isinstance(entry, dict):
+        for value in entry.values():
+            if isinstance(value, str) and value.strip() and value != "Not Found":
+                name = value
+                break
+
+    if not name:
         return jsonify({"name": "Sin informacion"})
     return jsonify({"name": name})
 
