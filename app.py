@@ -1,5 +1,6 @@
 import os
 from flask import Flask, request, jsonify
+
 import requests
 
 app = Flask(__name__)
@@ -9,12 +10,23 @@ TRUECALLER_API_KEY = os.environ.get("TRUECALLER_API_KEY", "")
 PROXY_SECRET = os.environ.get("PROXY_SECRET", "")
 
 
+@app.after_request
+def add_cors_headers(response):
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, X-Proxy-Secret"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    return response
+
+
 def _unauthorized():
     return jsonify({"error": "No autorizado"}), 401
 
 
-@app.route("/lookup", methods=["POST"])
+@app.route("/lookup", methods=["POST", "OPTIONS"])
 def lookup():
+    if request.method == "OPTIONS":
+        return "", 204
+
     if not PROXY_SECRET or request.headers.get("X-Proxy-Secret") != PROXY_SECRET:
         return _unauthorized()
 
@@ -56,8 +68,11 @@ def lookup():
     return jsonify({"name": name})
 
 
-@app.route("/status", methods=["GET"])
+@app.route("/status", methods=["GET", "OPTIONS"])
 def status():
+    if request.method == "OPTIONS":
+        return "", 204
+
     if not PROXY_SECRET or request.headers.get("X-Proxy-Secret") != PROXY_SECRET:
         return _unauthorized()
 
