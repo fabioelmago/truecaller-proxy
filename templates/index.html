@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Buscador de Números</title>
+<style>
+  :root{
+    --bg: #0d0b12;
+    --surface: #17131f;
+    --surface-2: #1f1a2b;
+    --fg: #f2eee6;
+    --muted: #a89bc4;
+    --accent: #d4af37;
+    --danger: #e0685a;
+    --ok: #6fbf8b;
+    --font-display: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+    --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono: ui-monospace, 'SF Mono', Consolas, monospace;
+    color-scheme: dark;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-body);
+    padding: 32px 16px;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+  }
+  .page{
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+  header{
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    text-align: center;
+  }
+  header .mark{
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--accent);
+  }
+  header .sub{
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+  .card{
+    background: var(--surface);
+    border: 1px solid rgba(212,175,55,0.18);
+    border-radius: 18px;
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  label{
+    display: block;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  input[type="text"], input[type="password"], input[type="tel"]{
+    width: 100%;
+    background: var(--surface-2);
+    border: 1px solid rgba(212,175,55,0.22);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    color: var(--fg);
+  }
+  input:focus{ outline: 2px solid var(--accent); outline-offset: 1px; }
+  .field{ display:flex; flex-direction:column; }
+  .key-row{ display: flex; gap: 8px; align-items: flex-end; }
+  .key-row .field{ flex: 1; min-width: 0; }
+  button{
+    font-family: var(--font-body);
+    font-weight: 600;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+  button:active{ transform: scale(0.98); }
+  button:disabled{ opacity: 0.55; cursor: default; }
+  .btn-primary{ background: var(--accent); color: #17131f; padding: 13px 18px; font-size: 0.95rem; }
+  .btn-ghost{
+    background: transparent; color: var(--muted);
+    border: 1px solid rgba(212,175,55,0.3);
+    padding: 12px 14px; font-size: 0.85rem; white-space: nowrap;
+  }
+  .btn-text{
+    background: none; color: var(--accent); padding: 0;
+    font-size: 0.78rem; text-decoration: underline; text-underline-offset: 3px;
+  }
+  .search-row{ display: flex; gap: 8px; }
+  .search-row .field{ flex: 1; min-width: 0; }
+  .search-row button{ align-self: flex-end; }
+  .result{
+    border-radius: 14px; padding: 18px;
+    display: flex; flex-direction: column; gap: 6px;
+    min-height: 64px; justify-content: center;
+  }
+  .result.idle, .result.loading{ background: var(--surface-2); color: var(--muted); font-size: 0.85rem; text-align: center; }
+  .result.found{ background: rgba(111,191,139,0.14); border: 1px solid rgba(111,191,139,0.4); }
+  .result.notfound{ background: var(--surface-2); border: 1px solid rgba(168,155,196,0.3); }
+  .result.error{ background: rgba(224,104,90,0.14); border: 1px solid rgba(224,104,90,0.45); font-size: 0.85rem; }
+  .result .label{ font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .result .name{ font-family: var(--font-display); font-size: 1.6rem; font-weight: 600; }
+  .result.found .name{ color: var(--ok); }
+  .history{ display: flex; flex-direction: column; gap: 8px; }
+  .history h2{ font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin: 0; }
+  .history ul{ list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+  .history li{ display: flex; justify-content: space-between; align-items: center; gap: 10px; background: var(--surface-2); border-radius: 8px; padding: 8px 12px; font-size: 0.85rem; }
+  .history li button{ background: none; color: var(--accent); padding: 0; font-size: 0.78rem; }
+  .history .num{ font-family: var(--font-mono); color: var(--muted); }
+  .history .nm{ font-weight: 600; }
+  .status-line{ font-size: 0.78rem; color: var(--muted); text-align: center; min-height: 1em; }
+  .status-line.ok{ color: var(--ok); }
+  .status-line.err{ color: var(--danger); }
+  footer{ text-align: center; font-size: 0.72rem; color: var(--muted); }
+  [hidden]{ display: none !important; }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <div class="mark">Buscador</div>
+    <div class="sub">Consulta rápida de números</div>
+  </header>
+
+  <div class="card">
+    <div class="key-row">
+      <div class="field">
+        <label for="apiKey">Clave de acceso</label>
+        <input type="password" id="apiKey" placeholder="pega aquí tu secreto" autocomplete="off">
+      </div>
+      <button class="btn-ghost" id="toggleKey" type="button">Ver</button>
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <button class="btn-text" id="checkStatus" type="button">Ver estado de la clave</button>
+      <span class="status-line" id="statusLine"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="search-row">
+      <div class="field">
+        <label for="phoneInput">Número de teléfono</label>
+        <input type="tel" id="phoneInput" placeholder="+34612345678" autocomplete="off">
+      </div>
+      <button class="btn-primary" id="searchBtn" type="button">Buscar</button>
+    </div>
+    <div class="result idle" id="resultBox">Escribe un número y pulsa Buscar</div>
+  </div>
+
+  <div class="card history" id="historyCard" hidden>
+    <h2>Últimas consultas</h2>
+    <ul id="historyList"></ul>
+  </div>
+
+  <footer>Los datos se guardan solo en este navegador.</footer>
+</div>
+
+<script>
+(function(){
+  const apiKeyInput = document.getElementById('apiKey');
+  const toggleKeyBtn = document.getElementById('toggleKey');
+  const checkStatusBtn = document.getElementById('checkStatus');
+  const statusLine = document.getElementById('statusLine');
+  const phoneInput = document.getElementById('phoneInput');
+  const searchBtn = document.getElementById('searchBtn');
+  const resultBox = document.getElementById('resultBox');
+  const historyCard = document.getElementById('historyCard');
+  const historyList = document.getElementById('historyList');
+
+  const STORAGE_KEY = 'buscador_apikey';
+  const HISTORY_KEY = 'buscador_history';
+
+  function safeGet(key){ try { return localStorage.getItem(key); } catch(e) { return null; } }
+  function safeSet(key, val){ try { localStorage.setItem(key, val); } catch(e) {} }
+
+  const savedKey = safeGet(STORAGE_KEY);
+  if (savedKey) apiKeyInput.value = savedKey;
+
+  apiKeyInput.addEventListener('input', function(){
+    safeSet(STORAGE_KEY, apiKeyInput.value.trim());
+  });
+
+  toggleKeyBtn.addEventListener('click', function(){
+    const isPw = apiKeyInput.type === 'password';
+    apiKeyInput.type = isPw ? 'text' : 'password';
+    toggleKeyBtn.textContent = isPw ? 'Ocultar' : 'Ver';
+  });
+
+  function loadHistory(){
+    try { const raw = safeGet(HISTORY_KEY); return raw ? JSON.parse(raw) : []; } catch(e) { return []; }
+  }
+  function saveHistory(list){ safeSet(HISTORY_KEY, JSON.stringify(list.slice(0, 8))); }
+  function renderHistory(){
+    const list = loadHistory();
+    if (!list.length){ historyCard.hidden = true; return; }
+    historyCard.hidden = false;
+    historyList.innerHTML = '';
+    list.forEach(function(entry){
+      const li = document.createElement('li');
+      const left = document.createElement('span');
+      left.innerHTML = '<span class="num">' + entry.number + '</span> — <span class="nm">' + entry.name + '</span>';
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = 'Repetir';
+      btn.addEventListener('click', function(){ phoneInput.value = entry.number; doLookup(); });
+      li.appendChild(left);
+      li.appendChild(btn);
+      historyList.appendChild(li);
+    });
+  }
+  renderHistory();
+
+  function addToHistory(number, name){
+    const list = loadHistory().filter(function(e){ return e.number !== number; });
+    list.unshift({ number: number, name: name });
+    saveHistory(list);
+    renderHistory();
+  }
+
+  function setResult(state, labelText, nameText){
+    resultBox.className = 'result ' + state;
+    if (state === 'idle' || state === 'loading' || state === 'error'){
+      resultBox.innerHTML = '';
+      resultBox.textContent = nameText;
+    } else {
+      resultBox.innerHTML = '<span class="label">' + labelText + '</span><span class="name">' + nameText + '</span>';
+    }
+  }
+
+  function currentKey(){ return apiKeyInput.value.trim(); }
+
+  async function doLookup(){
+    const key = currentKey();
+    const number = phoneInput.value.trim();
+
+    if (!key){ setResult('error', '', 'Falta tu clave de acceso arriba.'); apiKeyInput.focus(); return; }
+    if (!number){ setResult('error', '', 'Escribe un número primero.'); phoneInput.focus(); return; }
+
+    searchBtn.disabled = true;
+    setResult('loading', '', 'Consultando…');
+
+    try {
+      const res = await fetch('/lookup', {
+        method: 'POST',
+        headers: { 'X-Proxy-Secret': key, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ number: number })
+      });
+
+      if (!res.ok){
+        let detail = 'Error ' + res.status;
+        try { const errBody = await res.json(); if (errBody && errBody.error) detail = errBody.error; } catch(e) {}
+        setResult('error', '', detail);
+        return;
+      }
+
+      const data = await res.json();
+      const name = data && data.name ? data.name : null;
+
+      if (!name || name === 'Sin informacion' || name === 'Not Found'){
+        setResult('notfound', 'Resultado', 'Sin información');
+        addToHistory(number, 'Sin información');
+      } else {
+        setResult('found', 'Nombre encontrado', name);
+        addToHistory(number, name);
+      }
+    } catch (err) {
+      setResult('error', '', 'No se pudo conectar (revisa tu conexión o vuelve a intentarlo).');
+    } finally {
+      searchBtn.disabled = false;
+    }
+  }
+
+  searchBtn.addEventListener('click', doLookup);
+  phoneInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') doLookup(); });
+
+  checkStatusBtn.addEventListener('click', async function(){
+    const key = currentKey();
+    if (!key){ statusLine.className = 'status-line err'; statusLine.textContent = 'Falta tu clave de acceso.'; return; }
+    statusLine.className = 'status-line';
+    statusLine.textContent = 'Consultando…';
+    try {
+      const res = await fetch('/status', { headers: { 'X-Proxy-Secret': key } });
+      if (!res.ok){
+        let detail = 'Error ' + res.status;
+        try { const errBody = await res.json(); if (errBody && (errBody.detail || errBody.error)) detail = errBody.detail || errBody.error; } catch(e) {}
+        statusLine.className = 'status-line err';
+        statusLine.textContent = detail;
+        return;
+      }
+      const data = await res.json();
+      let remaining;
+      if (data.quota_type === 'unlimited'){ remaining = 'Ilimitado'; }
+      else if (data.quota_type === 'daily'){ remaining = data.remaining_today + ' de ' + data.daily_limit + ' hoy'; }
+      else { remaining = data.remaining + ' de ' + data.total_limit + ' en total'; }
+      statusLine.className = 'status-line ok';
+      statusLine.textContent = (data.is_active ? 'Activa' : 'Inactiva') + ' · ' + remaining;
+    } catch(err){
+      statusLine.className = 'status-line err';
+      statusLine.textContent = 'No se pudo conectar.';
+    }
+  });
+})();
+</script>
+</body>
+</html>
